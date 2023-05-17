@@ -1,5 +1,5 @@
 import { api } from "@/utils/api";
-import React, { useState, useEffect, type FC, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   DragDropContext,
   Droppable,
@@ -26,11 +26,10 @@ type Column = {
 };
 
 type Columns = {
-  [key: string]: Column | { items: TaskItem[]; name: string };
+  [key: string]: Column;
 };
 
-const TaskBoard: FC<TaskBoardProps> = ({ projectId }) => {
-  const [dataFetched, setDataFetched] = useState(false);
+const TaskBoard: React.FC<TaskBoardProps> = ({ projectId }) => {
   const initialColumns: Columns = useMemo(
     () => ({
       PENDING: { name: "Pending", items: [] },
@@ -40,12 +39,8 @@ const TaskBoard: FC<TaskBoardProps> = ({ projectId }) => {
     []
   );
   const [columns, setColumns] = useState(initialColumns);
-  const { data, refetch } = api.tasks.getAllByProjectId.useQuery(
-    { projectId },
-    {
-      enabled: false, // Disable automatic data fetching
-    }
-  );
+  const { data, refetch } = api.tasks.getAllByProjectId.useQuery({ projectId });
+
   const { mutate } = api.tasks.updateStatusById.useMutation({
     onSuccess: () => {
       console.log("success");
@@ -54,32 +49,6 @@ const TaskBoard: FC<TaskBoardProps> = ({ projectId }) => {
       console.log("error");
     },
   });
-
-  useEffect(() => {
-    if (!data) return;
-
-    const updatedColumns: Columns = {
-      ...initialColumns,
-    };
-
-    data.forEach((task: Task) => {
-      const { status, id, name, description } = task;
-      updatedColumns[status]?.items?.push({
-        id,
-        content: name,
-        description,
-      });
-    });
-
-    setColumns(updatedColumns);
-  }, [data, initialColumns]);
-
-  useEffect(() => {
-    if (!dataFetched) {
-      void refetch(); // Fetch data manually if it hasn't been fetched yet
-      setDataFetched(true);
-    }
-  }, [dataFetched, refetch]);
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -156,6 +125,34 @@ const TaskBoard: FC<TaskBoardProps> = ({ projectId }) => {
       status: newStatus,
     });
   };
+
+  useEffect(() => {
+    refetch();
+  }, [projectId, refetch]);
+
+  useEffect(() => {
+    if (!data) return;
+
+    const updatedColumns: Columns = {
+      ...initialColumns,
+    };
+
+    // Clear existing items in columns
+    Object.keys(updatedColumns).forEach((columnId) => {
+      updatedColumns[columnId].items = [];
+    });
+
+    data.forEach((task: Task) => {
+      const { status, id, name, description } = task;
+      updatedColumns[status]?.items.push({
+        id,
+        content: name,
+        description,
+      });
+    });
+
+    setColumns(updatedColumns);
+  }, [data, initialColumns]);
 
   if (!data || data.length === 0) {
     return (
