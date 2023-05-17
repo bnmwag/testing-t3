@@ -6,6 +6,6 @@ import { createServerSideHelpers } from "@trpc/react-query/server";
 export const generateSSGHelper = () =>
   createServerSideHelpers({
     router: appRouter,
-    ctx: { prisma, session: null },
+    ctx: { prisma, session: null, userId: null },
     transformer: superjson,
   });
