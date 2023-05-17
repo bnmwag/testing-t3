@@ -1,11 +1,11 @@
 import { cn } from "@/lib/utils";
 import { api } from "@/utils/api";
-import { type Project } from "@prisma/client";
 import { Separator } from "@radix-ui/react-separator";
 import { cva } from "class-variance-authority";
 import Link from "next/link";
 import { type FC } from "react";
 import { format } from "date-fns";
+import { type Project, type Task } from "@prisma/client";
 
 interface ProjectFeedProps {
   userId: string;
@@ -38,11 +38,13 @@ const ProjectFeed: FC<ProjectFeedProps> = ({ userId, compact = false }) => {
 export default ProjectFeed;
 
 export interface ProjectInFeedProps {
-  project: Project;
+  project: Project & { tasks: Task[] };
   compact?: boolean;
 }
 
 export const ProjectInFeed: FC<ProjectInFeedProps> = ({ project, compact }) => {
+  console.log(project);
+
   return (
     <Link href={`/personal/projects/${project.id}`}>
       <div className="flex flex-col gap-8 p-4 transition hover:bg-foreground/10">
